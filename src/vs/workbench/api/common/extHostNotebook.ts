@@ -3,6 +3,10 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// {{SQL CARBON EDIT}}
+// This controller is reimplemented as an ADS-specific version in extHostNotebookADS.ts
+
+/*
 import { CancellationToken, CancellationTokenSource } from 'vs/base/common/cancellation';
 import { Emitter, Event } from 'vs/base/common/event';
 import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
@@ -1070,3 +1074,4 @@ function createNotebookCellStatusBarApiItem(internalItem: NotebookCellStatusBarI
 		dispose() { internalItem.dispose(); }
 	});
 }
+*/

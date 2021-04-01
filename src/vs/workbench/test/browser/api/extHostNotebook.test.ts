@@ -3,6 +3,10 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// {{SQL CARBON EDIT}}
+// ADS uses its own notebook controller, rather than the one from VSCode
+
+/*
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { ExtHostDocumentsAndEditors } from 'vs/workbench/api/common/extHostDocumentsAndEditors';
@@ -11,7 +15,7 @@ import { DisposableStore } from 'vs/base/common/lifecycle';
 import { NullLogService } from 'vs/platform/log/common/log';
 import { mock } from 'vs/base/test/common/mock';
 import { IModelAddedData, MainContext, MainThreadCommandsShape, MainThreadNotebookShape } from 'vs/workbench/api/common/extHost.protocol';
-import { ExtHostNotebookController } from 'vs/workbench/api/common/extHostNotebook';
+import { ExtHostNotebookController } from 'vs/workbench/api/common/extHostNotebookADS'; // {{SQL CARBON EDIT}}
 import { ExtHostNotebookDocument } from 'vs/workbench/api/common/extHostNotebookDocument';
 import { CellKind, CellUri, NotebookCellsChangeType } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import { URI } from 'vs/base/common/uri';
@@ -306,3 +310,4 @@ suite('NotebookCell#Document', function () {
 		assert.equal(second.index, 2);
 	});
 });
+*/

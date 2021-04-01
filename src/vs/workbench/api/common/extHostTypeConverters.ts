@@ -30,7 +30,7 @@ import { LogLevel as _MainLogLevel } from 'vs/platform/log/common/log';
 import { coalesce, isNonEmptyArray } from 'vs/base/common/arrays';
 import { RenderLineNumbersType } from 'vs/editor/common/config/editorOptions';
 import { CommandsConverter } from 'vs/workbench/api/common/extHostCommands';
-import { ExtHostNotebookController } from 'vs/workbench/api/common/extHostNotebook';
+import { ExtHostNotebookController } from 'vs/workbench/api/common/extHostNotebookADS'; // {{SQL CARBON EDIT}}
 import { CellOutputKind, IDisplayOutput, INotebookDecorationRenderOptions } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import { ITestItem, ITestState } from 'vs/workbench/contrib/testing/common/testCollection';
 

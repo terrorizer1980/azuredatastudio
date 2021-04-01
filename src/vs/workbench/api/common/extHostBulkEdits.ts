@@ -5,7 +5,7 @@
 
 import { MainContext, MainThreadBulkEditsShape } from 'vs/workbench/api/common/extHost.protocol';
 import { ExtHostDocumentsAndEditors } from 'vs/workbench/api/common/extHostDocumentsAndEditors';
-import { ExtHostNotebookController } from 'vs/workbench/api/common/extHostNotebook';
+import { ExtHostNotebookController } from 'vs/workbench/api/common/extHostNotebookADS'; // {{SQL CARBON EDIT}}
 import { IExtHostRpcService } from 'vs/workbench/api/common/extHostRpcService';
 import { WorkspaceEdit } from 'vs/workbench/api/common/extHostTypeConverters';
 import type * as vscode from 'vscode';
