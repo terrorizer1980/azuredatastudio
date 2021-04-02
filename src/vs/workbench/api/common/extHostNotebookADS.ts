@@ -19,11 +19,7 @@ import * as vscode from 'vscode';
 import { ExtHostNotebookDocument } from './extHostNotebookDocument';
 import { ExtHostNotebookEditor } from './extHostNotebookEditor';
 
-export interface ExtHostNotebookOutputRenderingHandler {
-	outputDisplayOrder: INotebookDisplayOrder | undefined;
-}
-
-export class ExtHostNotebookController implements ExtHostNotebookShape, ExtHostNotebookOutputRenderingHandler {
+export class ExtHostNotebookController implements ExtHostNotebookShape {
 	constructor(
 		mainContext: IMainContext,
 		commands: ExtHostCommands,
@@ -198,14 +194,6 @@ export class ExtHostNotebookController implements ExtHostNotebookShape, ExtHostN
 	}
 
 	public $acceptDocumentAndEditorsDelta(delta: INotebookDocumentsAndEditorsDelta): void {
-		throw new Error('Method not implemented.');
-	}
-
-	//#endregion
-
-	//#region ExtHostNotebookOutputRenderingHandler
-
-	public get outputDisplayOrder(): INotebookDisplayOrder | undefined {
 		throw new Error('Method not implemented.');
 	}
 
