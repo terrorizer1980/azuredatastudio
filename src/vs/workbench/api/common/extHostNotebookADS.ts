@@ -18,8 +18,11 @@ import { INotebookDisplayOrder, INotebookKernelInfoDto2, NotebookCellsChangedEve
 import * as vscode from 'vscode';
 import { ExtHostNotebookDocument } from './extHostNotebookDocument';
 import { ExtHostNotebookEditor } from './extHostNotebookEditor';
+import { MainThreadNotebookShape, SqlMainContext } from 'sql/workbench/api/common/sqlExtHost.protocol';
 
 export class ExtHostNotebookController implements ExtHostNotebookShape {
+	private readonly _proxy: MainThreadNotebookShape;
+
 	constructor(
 		mainContext: IMainContext,
 		commands: ExtHostCommands,
@@ -28,7 +31,7 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 		logService: ILogService,
 		extensionStoragePaths: IExtensionStoragePaths,
 	) {
-
+		this._proxy = mainContext.getProxy(SqlMainContext.MainThreadNotebook);
 	}
 
 	//#region vscode.notebook APIs
