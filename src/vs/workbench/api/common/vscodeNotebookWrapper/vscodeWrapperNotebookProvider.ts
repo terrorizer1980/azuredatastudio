@@ -15,7 +15,7 @@ import { VSCodeWrapperNotebookManager } from 'vs/workbench/api/common/vscodeNote
 export class VSCodeWrapperNotebookProvider implements azdata.nb.NotebookProvider {
 	private readonly _notebookManager: VSCodeWrapperNotebookManager;
 
-	constructor() {
+	constructor(private readonly _providerId: string) {
 		this._notebookManager = new VSCodeWrapperNotebookManager();
 	}
 
@@ -28,7 +28,7 @@ export class VSCodeWrapperNotebookProvider implements azdata.nb.NotebookProvider
 	}
 
 	public get providerId(): string {
-		return this._notebookManager.notebookType;
+		return this._providerId;
 	}
 
 	public get standardKernels(): azdata.nb.IStandardKernel[] {

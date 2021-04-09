@@ -84,7 +84,7 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 
 		let wrapperProvider = this._providerMap.get(viewType);
 		if (!wrapperProvider) {
-			wrapperProvider = new VSCodeWrapperNotebookProvider();
+			wrapperProvider = new VSCodeWrapperNotebookProvider(viewType);
 			this._providerMap[viewType] = wrapperProvider;
 		}
 		wrapperProvider.setNotebookContentProvider(viewType, provider, options);
@@ -96,7 +96,7 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 		let addNewProvider = (viewType: string) => {
 			let wrapperProvider = this._providerMap.get(viewType);
 			if (!wrapperProvider) {
-				wrapperProvider = new VSCodeWrapperNotebookProvider();
+				wrapperProvider = new VSCodeWrapperNotebookProvider(viewType);
 				this._providerMap[viewType] = wrapperProvider;
 			}
 			wrapperProvider.setNotebookKernelProvider(selector, provider);
