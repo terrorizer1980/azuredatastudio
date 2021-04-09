@@ -90,6 +90,7 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 		wrapperProvider.setNotebookContentProvider(viewType, provider, options);
 
 		// TODO: call proxy's registerNotebookKernelProvider method here
+		this._proxy.$registerNotebookProvider(undefined, -1);
 	}
 
 	public registerNotebookKernelProvider(extension: IExtensionDescription, selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): vscode.Disposable {

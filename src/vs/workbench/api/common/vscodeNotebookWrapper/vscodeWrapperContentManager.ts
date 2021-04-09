@@ -8,8 +8,10 @@ import * as vscode from 'vscode';
 
 export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 
-	constructor() {
-
+	constructor(
+		private readonly _providerId: string,
+		private readonly _provider: vscode.NotebookContentProvider,
+		private readonly _options?: vscode.NotebookDocumentContentOptions) {
 	}
 
 	public getNotebookContents(notebookUri: vscode.Uri): Thenable<azdata.nb.INotebookContents> {

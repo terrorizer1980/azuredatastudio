@@ -9,12 +9,6 @@ import { VSCodeWrapperSessionManager } from 'vs/workbench/api/common/vscodeNoteb
 import * as vscode from 'vscode';
 
 export class VSCodeWrapperNotebookManager implements azdata.nb.NotebookManager {
-	private _contentProvider: vscode.NotebookContentProvider | undefined;
-
-	private _kernelDocSelector: vscode.NotebookDocumentFilter | undefined;
-	private _kernelProvider: vscode.NotebookKernelProvider | undefined;
-	private _contentOptions: vscode.NotebookDocumentContentOptions | undefined;
-
 	private _contentManager: VSCodeWrapperContentManager;
 	private _sessionManager: VSCodeWrapperSessionManager;
 
@@ -39,7 +33,7 @@ export class VSCodeWrapperNotebookManager implements azdata.nb.NotebookManager {
 	}
 
 	public setNotebookContentProvider(notebookType: string, provider: vscode.NotebookContentProvider, options?: vscode.NotebookDocumentContentOptions): void {
-		if (this._contentProvider) {
+		if (this._contentManager) {
 			throw new Error('Notebook content provider already defined.');
 		}
 
@@ -47,12 +41,11 @@ export class VSCodeWrapperNotebookManager implements azdata.nb.NotebookManager {
 			throw new Error('Content provider does not match the view type for this notebook manager.');
 		}
 
-		this._contentProvider = provider;
-		this._contentOptions = options;
+		this._contentManager = new VSCodeWrapperContentManager(this._providerId, provider, options);
 	}
 
 	public setNotebookKernelProvider(selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): void {
-		if (this._kernelProvider) {
+		if (this._sessionManager) {
 			throw new Error('Notebook kernel provider already defined.');
 		}
 
@@ -62,7 +55,6 @@ export class VSCodeWrapperNotebookManager implements azdata.nb.NotebookManager {
 			throw new Error('Kernel provider does not match the view type for this notebook manager.');
 		}
 
-		this._kernelDocSelector = selector;
-		this._kernelProvider = provider;
+		this._sessionManager = new VSCodeWrapperSessionManager(this._providerId, selector, provider);
 	}
 }
