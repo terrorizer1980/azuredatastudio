@@ -80,6 +80,7 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 
 	public registerNotebookKernelProvider(extension: IExtensionDescription, selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): vscode.Disposable {
 		throw new Error('Method not implemented.');
+		// TODO: call proxy's registerNotebookKernelProvider method here
 	}
 
 	public get notebookDocuments(): ExtHostNotebookDocument[] {

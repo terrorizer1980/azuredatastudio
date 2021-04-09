@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as azdata from 'azdata';
+import { VSCodeWrapperNotebookManager } from 'vs/workbench/api/common/vscodeWrapperNotebookManager';
 import * as vscode from 'vscode';
 
 /**
@@ -12,62 +13,30 @@ import * as vscode from 'vscode';
  * in NotebookProvider APIs.
  */
 export class VSCodeWrapperNotebookProvider implements azdata.nb.NotebookProvider {
-
-	private _notebookType: string | undefined;
-	private _contentProvider: vscode.NotebookContentProvider | undefined;
-
-	private _kernelDocSelector: vscode.NotebookDocumentFilter | undefined;
-	private _kernelProvider: vscode.NotebookKernelProvider | undefined;
-	private _contentOptions: vscode.NotebookDocumentContentOptions | undefined;
+	private readonly _notebookManager: VSCodeWrapperNotebookManager;
 
 	constructor() {
+		this._notebookManager = new VSCodeWrapperNotebookManager();
 	}
 
 	public setNotebookContentProvider(notebookType: string, provider: vscode.NotebookContentProvider, options?: vscode.NotebookDocumentContentOptions): void {
-		if (this._contentProvider || this._notebookType) {
-			throw new Error('Notebook content provider already defined.');
-		}
-
-		if (this._kernelDocSelector) {
-			let viewTypeIsArray = Array.isArray(this._kernelDocSelector.viewType);
-			if (viewTypeIsArray && !this._kernelDocSelector.viewType?.includes(notebookType)
-				|| !viewTypeIsArray && this._kernelDocSelector.viewType !== notebookType) {
-				throw new Error('Kernel provider does not match the view type for the registered content provider.');
-			}
-		}
-
-		this._notebookType = notebookType;
-		this._contentProvider = provider;
-		this._contentOptions = options;
+		this._notebookManager.setNotebookContentProvider(notebookType, provider, options);
 	}
 
 	public setNotebookKernelProvider(selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): void {
-		if (this._kernelProvider || this._kernelDocSelector) {
-			throw new Error('Notebook kernel provider already defined.');
-		}
-
-		if (this._notebookType) {
-			let viewTypeIsArray = Array.isArray(selector.viewType);
-			if (viewTypeIsArray && !selector.viewType?.includes(this._notebookType)
-				|| !viewTypeIsArray && selector.viewType !== this._notebookType) {
-				throw new Error('Kernel provider does not match the view type for the registered content provider.');
-			}
-		}
-
-		this._kernelDocSelector = selector;
-		this._kernelProvider = provider;
+		this._notebookManager.setNotebookKernelProvider(selector, provider);
 	}
 
 	public get providerId(): string {
-		return this._notebookType;
+		return this._notebookManager.notebookType;
 	}
 
 	public get standardKernels(): azdata.nb.IStandardKernel[] {
-		return [];
+		return []; // This property is deprecated, so returning an empty array here is intentional.
 	}
 
 	public getNotebookManager(notebookUri: vscode.Uri): Thenable<azdata.nb.NotebookManager> {
-		throw new Error('Method not implemented.');
+		return Promise.resolve(this._notebookManager);
 	}
 
 	public handleNotebookClosed(notebookUri: vscode.Uri): void {
