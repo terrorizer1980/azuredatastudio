@@ -19,9 +19,12 @@ import * as vscode from 'vscode';
 import { ExtHostNotebookDocument } from '../extHostNotebookDocument';
 import { ExtHostNotebookEditor } from '../extHostNotebookEditor';
 import { MainThreadNotebookShape, SqlMainContext } from 'sql/workbench/api/common/sqlExtHost.protocol';
+import { VSCodeWrapperNotebookProvider } from 'vs/workbench/api/common/vscodeNotebookWrapper/vscodeWrapperNotebookProvider';
 
 export class ExtHostNotebookController implements ExtHostNotebookShape {
 	private readonly _proxy: MainThreadNotebookShape;
+
+	private readonly _providerMap = new Map<string, VSCodeWrapperNotebookProvider>();
 
 	constructor(
 		mainContext: IMainContext,
@@ -75,12 +78,42 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 			};
 		}
 	): vscode.Disposable {
-		throw new Error('Method not implemented.');
+		if (!viewType) {
+			throw new Error('Content provider\'s view type was not defined.');
+		}
+
+		let wrapperProvider = this._providerMap.get(viewType);
+		if (!wrapperProvider) {
+			wrapperProvider = new VSCodeWrapperNotebookProvider();
+			this._providerMap[viewType] = wrapperProvider;
+		}
+		wrapperProvider.setNotebookContentProvider(viewType, provider, options);
+
+		// TODO: call proxy's registerNotebookKernelProvider method here
 	}
 
 	public registerNotebookKernelProvider(extension: IExtensionDescription, selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): vscode.Disposable {
-		throw new Error('Method not implemented.');
+		let addNewProvider = (viewType: string) => {
+			let wrapperProvider = this._providerMap.get(viewType);
+			if (!wrapperProvider) {
+				wrapperProvider = new VSCodeWrapperNotebookProvider();
+				this._providerMap[viewType] = wrapperProvider;
+			}
+			wrapperProvider.setNotebookKernelProvider(selector, provider);
+		};
+
+		if (Array.isArray(selector.viewType)) {
+			for (let viewType of selector.viewType) {
+				addNewProvider(viewType);
+			}
+		} else if (selector.viewType) {
+			addNewProvider(selector.viewType);
+		} else {
+			throw new Error('Kernel provider\'s view type was not defined.');
+		}
+
 		// TODO: call proxy's registerNotebookKernelProvider method here
+		this._proxy.$registerNotebookProvider(undefined, -1);
 	}
 
 	public get notebookDocuments(): ExtHostNotebookDocument[] {

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as azdata from 'azdata';
-import * as vscode from 'vscode';
+// import * as vscode from 'vscode';
 
 export class VSCodeWrapperSessionManager implements azdata.nb.SessionManager {
 
