@@ -6,7 +6,7 @@
 import * as types from 'vs/workbench/api/common/extHostTypes';
 import * as vscode from 'vscode';
 import { Event, Emitter } from 'vs/base/common/event';
-import { ExtHostNotebookController } from 'vs/workbench/api/common/extHostNotebookADS'; // {{SQL CARBON EDIT}}
+import { ExtHostNotebookController } from 'vs/workbench/api/common/vscodeNotebookWrapper/extHostNotebookADS'; // {{SQL CARBON EDIT}}
 import { ExtHostDocuments } from 'vs/workbench/api/common/extHostDocuments';
 import { PrefixSumComputer } from 'vs/editor/common/viewModel/prefixSumComputer';
 import { DisposableStore } from 'vs/base/common/lifecycle';

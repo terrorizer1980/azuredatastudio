@@ -27,7 +27,7 @@ export class VSCodeWrapperNotebookManager implements azdata.nb.NotebookManager {
 	}
 
 	public get serverManager(): azdata.nb.ServerManager {
-		return undefined;
+		return undefined; // No server management required for VSCode extension kernels
 	}
 
 	public get notebookType(): string {

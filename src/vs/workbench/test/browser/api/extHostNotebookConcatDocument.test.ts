@@ -9,7 +9,7 @@ import { ExtHostDocuments } from 'vs/workbench/api/common/extHostDocuments';
 import { ExtHostDocumentsAndEditors } from 'vs/workbench/api/common/extHostDocumentsAndEditors';
 import { NullLogService } from 'vs/platform/log/common/log';
 import { ExtHostNotebookConcatDocument } from 'vs/workbench/api/common/extHostNotebookConcatDocument';
-import { ExtHostNotebookController } from 'vs/workbench/api/common/extHostNotebookADS'; // {{SQL CARBON EDIT}}
+import { ExtHostNotebookController } from 'vs/workbench/api/common/vscodeNotebookWrapper/extHostNotebookADS'; // {{SQL CARBON EDIT}}
 import { ExtHostNotebookDocument } from 'vs/workbench/api/common/extHostNotebookDocument';
 import { URI } from 'vs/base/common/uri';
 import { CellKind, CellUri, NotebookCellsChangeType } from 'vs/workbench/contrib/notebook/common/notebookCommon';

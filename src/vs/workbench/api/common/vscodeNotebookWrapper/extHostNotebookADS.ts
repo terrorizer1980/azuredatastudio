@@ -16,8 +16,8 @@ import * as extHostTypes from 'vs/workbench/api/common/extHostTypes';
 import { WebviewInitData } from 'vs/workbench/api/common/shared/webview';
 import { INotebookDisplayOrder, INotebookKernelInfoDto2, NotebookCellsChangedEventDto, NotebookDataDto } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import * as vscode from 'vscode';
-import { ExtHostNotebookDocument } from './extHostNotebookDocument';
-import { ExtHostNotebookEditor } from './extHostNotebookEditor';
+import { ExtHostNotebookDocument } from '../extHostNotebookDocument';
+import { ExtHostNotebookEditor } from '../extHostNotebookEditor';
 import { MainThreadNotebookShape, SqlMainContext } from 'sql/workbench/api/common/sqlExtHost.protocol';
 
 export class ExtHostNotebookController implements ExtHostNotebookShape {

@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as azdata from 'azdata';
-import { VSCodeWrapperNotebookManager } from 'vs/workbench/api/common/vscodeWrapperNotebookManager';
 import * as vscode from 'vscode';
+import { VSCodeWrapperNotebookManager } from 'vs/workbench/api/common/vscodeNotebookWrapper/vscodeWrapperNotebookManager';
 
 /**
  * This class is used as a shim between the VSCode notebook APIs and the ADS ones.
