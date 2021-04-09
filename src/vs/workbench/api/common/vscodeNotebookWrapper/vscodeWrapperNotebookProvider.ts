@@ -16,7 +16,7 @@ export class VSCodeWrapperNotebookProvider implements azdata.nb.NotebookProvider
 	private readonly _notebookManager: VSCodeWrapperNotebookManager;
 
 	constructor(private readonly _providerId: string) {
-		this._notebookManager = new VSCodeWrapperNotebookManager();
+		this._notebookManager = new VSCodeWrapperNotebookManager(this._providerId);
 	}
 
 	public setNotebookContentProvider(notebookType: string, provider: vscode.NotebookContentProvider, options?: vscode.NotebookDocumentContentOptions): void {

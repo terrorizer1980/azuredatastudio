@@ -4,26 +4,30 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as azdata from 'azdata';
+import { VSCodeWrapperContentManager } from 'vs/workbench/api/common/vscodeNotebookWrapper/vscodeWrapperContentManager';
+import { VSCodeWrapperSessionManager } from 'vs/workbench/api/common/vscodeNotebookWrapper/vscodeWrapperSessionManager';
 import * as vscode from 'vscode';
 
 export class VSCodeWrapperNotebookManager implements azdata.nb.NotebookManager {
-	private _notebookType: string | undefined;
 	private _contentProvider: vscode.NotebookContentProvider | undefined;
 
 	private _kernelDocSelector: vscode.NotebookDocumentFilter | undefined;
 	private _kernelProvider: vscode.NotebookKernelProvider | undefined;
 	private _contentOptions: vscode.NotebookDocumentContentOptions | undefined;
 
-	public constructor() {
+	private _contentManager: VSCodeWrapperContentManager;
+	private _sessionManager: VSCodeWrapperSessionManager;
+
+	public constructor(private readonly _providerId: string) {
 
 	}
 
 	public get contentManager(): azdata.nb.ContentManager {
-		return undefined;
+		return this._contentManager;
 	}
 
 	public get sessionManager(): azdata.nb.SessionManager {
-		return undefined;
+		return this._sessionManager;
 	}
 
 	public get serverManager(): azdata.nb.ServerManager {
@@ -31,38 +35,31 @@ export class VSCodeWrapperNotebookManager implements azdata.nb.NotebookManager {
 	}
 
 	public get notebookType(): string {
-		return this._notebookType;
+		return this._providerId;
 	}
 
 	public setNotebookContentProvider(notebookType: string, provider: vscode.NotebookContentProvider, options?: vscode.NotebookDocumentContentOptions): void {
-		if (this._contentProvider || this._notebookType) {
+		if (this._contentProvider) {
 			throw new Error('Notebook content provider already defined.');
 		}
 
-		if (this._kernelDocSelector) {
-			let viewTypeIsArray = Array.isArray(this._kernelDocSelector.viewType);
-			if (viewTypeIsArray && !this._kernelDocSelector.viewType?.includes(notebookType)
-				|| !viewTypeIsArray && this._kernelDocSelector.viewType !== notebookType) {
-				throw new Error('Kernel provider does not match the view type for the registered content provider.');
-			}
+		if (notebookType !== this._providerId) {
+			throw new Error('Content provider does not match the view type for this notebook manager.');
 		}
 
-		this._notebookType = notebookType;
 		this._contentProvider = provider;
 		this._contentOptions = options;
 	}
 
 	public setNotebookKernelProvider(selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): void {
-		if (this._kernelProvider || this._kernelDocSelector) {
+		if (this._kernelProvider) {
 			throw new Error('Notebook kernel provider already defined.');
 		}
 
-		if (this._notebookType) {
-			let viewTypeIsArray = Array.isArray(selector.viewType);
-			if (viewTypeIsArray && !selector.viewType?.includes(this._notebookType)
-				|| !viewTypeIsArray && selector.viewType !== this._notebookType) {
-				throw new Error('Kernel provider does not match the view type for the registered content provider.');
-			}
+		let viewTypeIsArray = Array.isArray(selector.viewType);
+		if (viewTypeIsArray && !selector.viewType?.includes(this._providerId)
+			|| !viewTypeIsArray && selector.viewType !== this._providerId) {
+			throw new Error('Kernel provider does not match the view type for this notebook manager.');
 		}
 
 		this._kernelDocSelector = selector;
