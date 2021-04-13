@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as azdata from 'azdata';
-import { VSCodeWrapperContentManager } from 'vs/workbench/api/common/vscodeNotebookWrapper/vscodeWrapperContentManager';
-import { VSCodeWrapperSessionManager } from 'vs/workbench/api/common/vscodeNotebookWrapper/vscodeWrapperSessionManager';
+import { VSCodeWrapperContentManager } from './vscodeWrapperContentManager';
+import { VSCodeWrapperSessionManager } from './vscodeWrapperSessionManager';
 import * as vscode from 'vscode';
 
 export class VSCodeWrapperNotebookManager implements azdata.nb.NotebookManager {
@@ -41,7 +41,7 @@ export class VSCodeWrapperNotebookManager implements azdata.nb.NotebookManager {
 			throw new Error('Content provider does not match the view type for this notebook manager.');
 		}
 
-		this._contentManager = new VSCodeWrapperContentManager(this._providerId, provider);
+		this._contentManager = new VSCodeWrapperContentManager(this._providerId, provider, options);
 	}
 
 	public setNotebookKernelProvider(selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): void {

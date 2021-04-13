@@ -5,12 +5,15 @@
 
 import * as azdata from 'azdata';
 import * as vscode from 'vscode';
+import { Schemas } from 'vs/base/common/network';
+import * as path from 'vs/base/common/path';
 
 export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 
 	constructor(
 		private readonly _providerId: string,
-		private readonly _provider: vscode.NotebookContentProvider) {
+		private readonly _provider: vscode.NotebookContentProvider,
+		private readonly _options: vscode.NotebookDocumentContentOptions | undefined) {
 	}
 
 	public async getNotebookContents(notebookUri: vscode.Uri): Promise<azdata.nb.INotebookContents> {
@@ -21,7 +24,8 @@ export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 
 	public async save(notebookUri: vscode.Uri, notebook: azdata.nb.INotebookContents): Promise<azdata.nb.INotebookContents> {
 		let document = this.convertContentsToNotebookDocument(notebookUri, notebook);
-		await this._provider.saveNotebook(document, undefined);
+		let cancelSource = new vscode.CancellationTokenSource();
+		await this._provider.saveNotebook(document, cancelSource.token);
 		return notebook;
 	}
 
@@ -30,6 +34,21 @@ export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 	}
 
 	private convertContentsToNotebookDocument(notebookUri: vscode.Uri, notebook: azdata.nb.INotebookContents): vscode.NotebookDocument {
-		return undefined;
+		return {
+			uri: notebookUri,
+			version: undefined,
+			fileName: path.basename(notebookUri.fsPath),
+			viewType: this._providerId,
+			isDirty: undefined,
+			isUntitled: notebookUri.scheme === Schemas.untitled,
+			cells: this.convertCellContentsToCells(notebook.cells),
+			contentOptions: this._options,
+			languages: notebook.metadata.language_info?.name ? [notebook.metadata.language_info?.name] : [],
+			metadata: {}
+		};
+	}
+
+	private convertCellContentsToCells(cellContents: azdata.nb.ICellContents[]): vscode.NotebookCell[] {
+		return [];
 	}
 }

@@ -19,7 +19,7 @@ import * as vscode from 'vscode';
 import { ExtHostNotebookDocument } from '../extHostNotebookDocument';
 import { ExtHostNotebookEditor } from '../extHostNotebookEditor';
 import { MainThreadNotebookShape, SqlMainContext } from 'sql/workbench/api/common/sqlExtHost.protocol';
-import { VSCodeWrapperNotebookProvider } from 'vs/workbench/api/common/vscodeNotebookWrapper/vscodeWrapperNotebookProvider';
+import { VSCodeWrapperNotebookProvider } from './vscodeWrapperNotebookProvider';
 
 export class ExtHostNotebookController implements ExtHostNotebookShape {
 	private readonly _proxy: MainThreadNotebookShape;
