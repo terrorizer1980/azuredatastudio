@@ -728,15 +728,10 @@ declare module 'vscode' {
 	export interface SourceControlInputBox {
 
 		/**
-		 * Shows a transient contextual message on the input.
-		 */
-		showValidationMessage(message: string, type: SourceControlInputBoxValidationType): void;
-
-		/**
 		 * A validation function for the input box. It's possible to change
 		 * the validation provider simply by setting this property to a different function.
 		 */
-		validateInput?(value: string, cursorPosition: number): ProviderResult<SourceControlInputBoxValidation>;
+		validateInput?(value: string, cursorPosition: number): ProviderResult<SourceControlInputBoxValidation | undefined | null>;
 	}
 
 	//#endregion
@@ -813,30 +808,6 @@ declare module 'vscode' {
 		 * created.
 		 */
 		readonly dimensions: TerminalDimensions | undefined;
-	}
-
-	//#endregion
-
-	//#region Terminal initial text https://github.com/microsoft/vscode/issues/120368
-
-	export interface TerminalOptions {
-		/**
-		 * A message to write to the terminal on first launch, note that this is not sent to the
-		 * process but, rather written directly to the terminal. This supports escape sequences such
-		 * a setting text style.
-		 */
-		readonly message?: string;
-	}
-
-	//#endregion
-
-	//#region Terminal icon https://github.com/microsoft/vscode/issues/120538
-
-	export interface TerminalOptions {
-		/**
-		 * A codicon ID to associate with this terminal.
-		 */
-		readonly icon?: string;
 	}
 
 	//#endregion
@@ -1077,45 +1048,17 @@ declare module 'vscode' {
 		readonly uri: Uri;
 		readonly version: number;
 
-		/** @deprecated Use `uri` instead */
 		// todo@API don't have this...
 		readonly fileName: string;
 
 		readonly isDirty: boolean;
 		readonly isUntitled: boolean;
-
-		/**
-		 * `true` if the notebook has been closed. A closed notebook isn't synchronized anymore
-		 * and won't be re-used when the same resource is opened again.
-		 */
-		readonly isClosed: boolean;
+		readonly cells: ReadonlyArray<NotebookCell>;
 
 		readonly metadata: NotebookDocumentMetadata;
 
 		// todo@API should we really expose this?
 		readonly viewType: string;
-
-		/**
-		 * The number of cells in the notebook document.
-		 */
-		readonly cellCount: number;
-
-		/**
-		 * Return the cell at the specified index. The index will be adjusted to the notebook.
-		 *
-		 * @param index - The index of the cell to retrieve.
-		 * @return A [cell](#NotebookCell).
-		 */
-		cellAt(index: number): NotebookCell;
-
-		/**
-		 * Get the cells of this notebook. A subset can be retrieved by providing
-		 * a range. The range will be adjuset to the notebook.
-		 *
-		 * @param range A notebook range.
-		 * @returns The cells contained by the range or all cells.
-		 */
-		getCells(range?: NotebookCellRange): ReadonlyArray<NotebookCell>;
 
 		/**
 		 * Save the document. The saving will be handled by the corresponding content provider
@@ -1127,7 +1070,6 @@ declare module 'vscode' {
 		save(): Thenable<boolean>;
 	}
 
-	// todo@API RENAME to NotebookRange
 	// todo@API maybe have a NotebookCellPosition sibling
 	export class NotebookCellRange {
 		readonly start: number;
@@ -1139,8 +1081,6 @@ declare module 'vscode' {
 		readonly isEmpty: boolean;
 
 		constructor(start: number, end: number);
-
-		with(change: { start?: number, end?: number }): NotebookCellRange;
 	}
 
 	export enum NotebookEditorRevealType {
@@ -1195,7 +1135,16 @@ declare module 'vscode' {
 		/**
 		 * The column in which this editor shows.
 		 */
+		// @jrieken
+		// this is not implemented...
 		readonly viewColumn?: ViewColumn;
+
+		/**
+		 * @deprecated
+		 */
+		// @rebornix REMOVE/REplace NotebookCommunication
+		// todo@API fishy? notebooks are public objects, there should be a "global" events for this
+		readonly onDidDispose: Event<void>;
 	}
 
 	export interface NotebookDocumentMetadataChangeEvent {
@@ -1486,6 +1435,13 @@ declare module 'vscode' {
 		readonly options?: NotebookDocumentContentOptions;
 		readonly onDidChangeNotebookContentOptions?: Event<NotebookDocumentContentOptions>;
 
+		// todo@API remove! against separation of data provider and renderer
+		/**
+		 * @deprecated
+		 */
+		// eslint-disable-next-line vscode-dts-cancellation
+		resolveNotebook(document: NotebookDocument, webview: NotebookCommunication): Thenable<void>;
+
 		/**
 		 * Content providers should always use [file system providers](#FileSystemProvider) to
 		 * resolve the raw content for `uri` as the resouce is not necessarily a file on disk.
@@ -1634,14 +1590,6 @@ declare module 'vscode' {
 		viewType?: string | string[];
 		filenamePattern?: NotebookFilenamePattern;
 	}
-
-	// export interface NotebookFilter {
-	// 	readonly viewType?: string;
-	// 	readonly scheme?: string;
-	// 	readonly pattern?: GlobPattern;
-	// }
-
-	// export type NotebookSelector = NotebookFilter | string | ReadonlyArray<NotebookFilter | string>;
 
 	// todo@API very unclear, provider MUST not return alive object but only data object
 	// todo@API unclear how the flow goes
@@ -2108,7 +2056,7 @@ declare module 'vscode' {
 	*/
 	export namespace test {
 		/**
-		 * Registers a provider that discovers tests in workspaces and documents.
+		 * Registers a provider that discovers and runs tests.
 		 */
 		export function registerTestProvider<T extends TestItem>(testProvider: TestProvider<T>): Disposable;
 
@@ -2118,7 +2066,7 @@ declare module 'vscode' {
 		 * that "run" is called, all tests given in the run have their state
 		 * automatically set to {@link TestRunState.Queued}.
 		 */
-		export function runTests<T extends TestItem>(run: TestRunRequest<T>, token?: CancellationToken): Thenable<void>;
+		export function runTests<T extends TestItem>(run: TestRunOptions<T>, cancellationToken?: CancellationToken): Thenable<void>;
 
 		/**
 		 * Returns an observer that retrieves tests in the given workspace folder.
@@ -2144,13 +2092,13 @@ declare module 'vscode' {
 		 * @param persist whether the test results should be saved by VS Code
 		 * and persisted across reloads. Defaults to true.
 		 */
-		export function publishTestResult(results: TestRunResult, persist?: boolean): void;
+		export function publishTestResult(results: TestResults, persist?: boolean): void;
 
 		/**
 		* List of test results stored by VS Code, sorted in descnding
 		* order by their `completedAt` time.
 		*/
-		export const testResults: ReadonlyArray<TestRunResult>;
+		export const testResults: ReadonlyArray<TestResults>;
 
 		/**
 		* Event that fires when the {@link testResults} array is updated.
@@ -2169,7 +2117,7 @@ declare module 'vscode' {
 		 * null if a top-level test was added or removed. When fired, the consumer
 		 * should check the test item and all its children for changes.
 		 */
-		readonly onDidChangeTest: Event<TestsChangeEvent>;
+		readonly onDidChangeTest: Event<TestChangeEvent>;
 
 		/**
 		 * An event that fires when all test providers have signalled that the tests
@@ -2188,7 +2136,7 @@ declare module 'vscode' {
 		dispose(): void;
 	}
 
-	export interface TestsChangeEvent {
+	export interface TestChangeEvent {
 		/**
 		 * List of all tests that are newly added.
 		 */
@@ -2206,6 +2154,18 @@ declare module 'vscode' {
 	}
 
 	/**
+	 * Tree of tests returned from the provide methods in the {@link TestProvider}.
+	 */
+	export interface TestHierarchy<T extends TestItem> {
+		/**
+		 * Root node for tests. The root instance must not be replaced over
+		 * the lifespan of the TestHierarchy, since you will need to reference it
+		 * in {@link onDidChangeTest} when a test is added or removed.
+		 */
+		readonly root: T;
+	}
+
+	/**
 	 * Discovers and provides tests.
 	 *
 	 * Additionally, the UI may request it to discover tests for the workspace
@@ -2220,7 +2180,7 @@ declare module 'vscode' {
 		 * when the user opens the test explorer.
 		 *
 		 * It's guaranteed that this method will not be called again while
-		 * there is a previous uncancelled call for the given workspace folder.
+		 * there is a previous uncancelled hierarchy for the given workspace folder.
 		 *
 		 * @param workspace The workspace in which to observe tests
 		 * @param cancellationToken Token that signals the used asked to abort the test run.
@@ -2257,13 +2217,13 @@ declare module 'vscode' {
 		 * @param cancellationToken Token that signals the used asked to abort the test run.
 		 */
 		// eslint-disable-next-line vscode-dts-provider-naming
-		runTests(options: TestRunOptions<T>, token: CancellationToken): ProviderResult<void>;
+		runTests(options: TestRun<T>, token: CancellationToken): ProviderResult<void>;
 	}
 
 	/**
 	 * Options given to {@link test.runTests}.
 	 */
-	export interface TestRunRequest<T extends TestItem = TestItem> {
+	export interface TestRunOptions<T extends TestItem = TestItem> {
 		/**
 		 * Array of specific tests to run. The {@link TestProvider.testRoot} may
 		 * be provided as an indication to run all tests.
@@ -2284,40 +2244,20 @@ declare module 'vscode' {
 	}
 
 	/**
-	 * Options given to {@link TestProvider.runTests}
+	 * Options given to `TestProvider.runTests`
 	 */
-	export interface TestRunOptions<T extends TestItem = TestItem> extends TestRunRequest<T> {
+	export interface TestRun<T extends TestItem = TestItem> extends TestRunOptions<T> {
 		/**
 		 * Updates the state of the test in the run. By default, all tests involved
 		 * in the run will have a "queued" state until they are updated by this method.
 		 *
-		 * Calling with method with nodes outside the {@link TestRunRequesttests}
-		 * or in the {@link TestRunRequestexclude} array will no-op.
+		 * Calling with method with nodes outside the {@link tests} or in the
+		 * {@link exclude} array will no-op.
 		 *
 		 * @param test The test to update
 		 * @param state The state to assign to the test
-		 * @param duration Optionally sets how long the test took to run
 		 */
-		setState(test: T, state: TestResultState, duration?: number): void;
-
-		/**
-		 * Appends a message, such as an assertion error, to the test item.
-		 *
-		 * Calling with method with nodes outside the {@link TestRunRequesttests}
-		 * or in the {@link TestRunRequestexclude} array will no-op.
-		 *
-		 * @param test The test to update
-		 * @param state The state to assign to the test
-		 *
-		 */
-		appendMessage(test: T, message: TestMessage): void;
-
-		/**
-		 * Appends raw output from the test runner. On the user's request, the
-		 * output will be displayed in a terminal. ANSI escape sequences,
-		 * such as colors and text styles, are supported.
-		 */
-		appendOutput(output: string): void;
+		setState(test: T, state: TestState): void;
 	}
 
 	export interface TestChildrenCollection<T> extends Iterable<T> {
@@ -2364,7 +2304,7 @@ declare module 'vscode' {
 		readonly id: string;
 
 		/**
-		 * URI this TestItem is associated with. May be a file or directory.
+		 * URI this TestItem is associated with. May be a file or file.
 		 */
 		readonly uri: Uri;
 
@@ -2391,21 +2331,25 @@ declare module 'vscode' {
 		range?: Range;
 
 		/**
-		 * Whether this test item can be run by providing it in the
-		 * {@link TestRunRequest.tests} array. Defaults to `true`.
+		 * Whether this test item can be run individually, defaults to `true`.
+		 *
+		 * In some cases, like Go's tests, test can have children but these
+		 * children cannot be run independently.
 		 */
 		runnable: boolean;
 
 		/**
-		 * Whether this test item can be debugged by providing it in the
-		 * {@link TestRunRequest.tests} array. Defaults to `false`.
+		 * Whether this test item can be debugged individually, defaults to `false`.
+		 *
+		 * In some cases, like Go's tests, test can have children but these
+		 * children cannot be run independently.
 		 */
 		debuggable: boolean;
 
 		/**
 		 * Whether this test item can be expanded in the tree view, implying it
-		 * has (or may have) children. If this is true, VS Code may call
-		 * the {@link TestItem.discoverChildren} method.
+		 * has (or may have) children. If this is given, the item may be
+		 * passed to the {@link TestHierarchy.getChildren} method.
 		 */
 		expandable: boolean;
 
@@ -2414,14 +2358,15 @@ declare module 'vscode' {
 		 * @param id Value of the "id" property
 		 * @param label Value of the "label" property.
 		 * @param uri Value of the "uri" property.
-		 * @param expandable Value of the "expandable" property.
+		 * @param parent Parent of this item. This should only be defined for the
+		 * test root.
 		 */
 		constructor(id: string, label: string, uri: Uri, expandable: boolean);
 
 		/**
 		 * Marks the test as outdated. This can happen as a result of file changes,
 		 * for example. In "auto run" mode, tests that are outdated will be
-		 * automatically rerun after a short delay. Invoking this on a
+		 * automatically re-run after a short delay. Invoking this on a
 		 * test with children will mark the entire subtree as outdated.
 		 *
 		 * Extensions should generally not override this method.
@@ -2455,7 +2400,7 @@ declare module 'vscode' {
 	/**
 	 * Possible states of tests in a test run.
 	 */
-	export enum TestResultState {
+	export enum TestResult {
 		// Initial state
 		Unset = 0,
 		// Test will be run, but is not currently running.
@@ -2470,6 +2415,32 @@ declare module 'vscode' {
 		Skipped = 5,
 		// Test run failed for some other reason (compilation error, timeout, etc)
 		Errored = 6
+	}
+
+	/**
+	 * TestState associated with a test in its results.
+	 */
+	export class TestState {
+		/**
+		 * Current state of the test.
+		 */
+		readonly state: TestResult;
+
+		/**
+		 * Optional duration of the test run, in milliseconds.
+		 */
+		duration?: number;
+
+		/**
+		 * Associated test run message. Can, for example, contain assertion
+		 * failure information if the test fails.
+		 */
+		messages: TestMessage[];
+
+		/**
+		 * Creates a new TestState instance.
+		 */
+		constructor(state: TestResult);
 	}
 
 	/**
@@ -2528,19 +2499,18 @@ declare module 'vscode' {
 	}
 
 	/**
-	 * TestResults can be provided to VS Code in {@link test.publishTestResult},
-	 * or read from it in {@link test.testResults}.
+	 * TestResults can be provided to VS Code, or read from it.
 	 *
 	 * The results contain a 'snapshot' of the tests at the point when the test
-	 * run is complete. Therefore, information such as its {@link Range} may be
-	 * out of date. If the test still exists in the workspace, consumers can use
-	 * its `id` to correlate the result instance with the living test.
+	 * run is complete. Therefore, information such as {@link Location} instances
+	 * may be out of date. If the test still exists in the workspace, consumers
+	 * can use its `id` to correlate the result instance with the living test.
 	 *
 	 * @todo coverage and other info may eventually be provided here
 	 */
-	export interface TestRunResult {
+	export interface TestResults {
 		/**
-		 * Unix milliseconds timestamp at which the test run was completed.
+		 * Unix milliseconds timestamp at which the tests were completed.
 		 */
 		completedAt: number;
 
@@ -2587,19 +2557,7 @@ declare module 'vscode' {
 		/**
 		 * Current result of the test.
 		 */
-		readonly state: TestResultState;
-
-		/**
-		 * The number of milliseconds the test took to run. This is set once the
-		 * `state` is `Passed`, `Failed`, or `Errored`.
-		 */
-		readonly duration?: number;
-
-		/**
-		 * Associated test run message. Can, for example, contain assertion
-		 * failure information if the test fails.
-		 */
-		readonly messages: ReadonlyArray<TestMessage>;
+		readonly result: TestState;
 
 		/**
 		 * Optional list of nested tests for this item.
@@ -2784,7 +2742,7 @@ declare module 'vscode' {
 
 	//#endregion
 
-	//#region https://github.com/microsoft/vscode/issues/120173
+	//#region https://github.com/microsoft/vscode/issues/106488
 
 	export enum WorkspaceTrustState {
 		/**
@@ -2802,19 +2760,22 @@ declare module 'vscode' {
 		 *
 		 * If trust will be required, users will be prompted to make a choice.
 		 */
-		Unspecified = 2
+		Unknown = 2
 	}
 
 	/**
-	 * The event data that is fired when the trust state of the workspace changes.
-	 * When trust is revoked, the workspace will be reloaded. Therefore, extensions are
-	 * not expected to handle transitions out of a trusted state.
+	 * The event data that is fired when the trust state of the workspace changes
 	 */
 	export interface WorkspaceTrustStateChangeEvent {
 		/**
-		 * New trust state of the workspace
+		 * Previous trust state of the workspace
 		 */
-		readonly newTrustState: WorkspaceTrustState;
+		previousTrustState: WorkspaceTrustState;
+
+		/**
+		 * Current trust state of the workspace
+		 */
+		currentTrustState: WorkspaceTrustState;
 	}
 
 	/**
@@ -2825,7 +2786,7 @@ declare module 'vscode' {
 		 * When true, a modal dialog will be used to request workspace trust.
 		 * When false, a badge will be displayed on the Setting activity bar item
 		 */
-		readonly modal: boolean;
+		modal: boolean;
 	}
 
 	export namespace workspace {
@@ -2839,7 +2800,7 @@ declare module 'vscode' {
 		 * @param options Optional object describing the properties of the
 		 * workspace trust request
 		 */
-		export function requestWorkspaceTrust(options?: WorkspaceTrustRequestOptions): Thenable<WorkspaceTrustState | undefined>;
+		export function requireWorkspaceTrust(options?: WorkspaceTrustRequestOptions): Thenable<WorkspaceTrustState>;
 
 		/**
 		 * Event that fires when the trust state of the current workspace changes
@@ -2849,25 +2810,32 @@ declare module 'vscode' {
 
 	//#endregion
 
-	//#region https://github.com/microsoft/vscode/issues/115807
+	//#region https://github.com/microsoft/vscode/issues/118084
 
-	export interface Webview {
+	/**
+	 * The reason why code actions were requested.
+	 */
+	export enum CodeActionTriggerKind {
 		/**
-		 * @param message A json serializable message to send to the webview.
-		 *
-		 *   For older versions of vscode, if an `ArrayBuffer` is included in `message`,
-		 *   it will not be serialized properly and will not be received by the webview.
-		 *   Similarly any TypedArrays, such as a `Uint8Array`, will be very inefficiently
-		 *   serialized and will also not be recreated as a typed array inside the webview.
-		 *
-		 *   However if your extension targets vscode 1.56+ in the `engines` field of its
-		 *   `package.json` any `ArrayBuffer` values that appear in `message` will be more
-		 *   efficiently transferred to the webview and will also be recreated inside of
-		 *   the webview.
+		 * Code actions were explicitly requested by the user or by an extension.
 		 */
-		postMessage(message: any): Thenable<boolean>;
+		Invoke = 1,
+
+		/**
+		 * Code actions were requested automatically.
+		 *
+		 * This typically happens when current selection in a file changes, but can
+		 * also be triggered when file content changes.
+		 */
+		Automatic = 2,
 	}
 
+	export interface CodeActionContext {
+		/**
+		 * The reason why code actions were requested.
+		 */
+		readonly triggerKind: CodeActionTriggerKind;
+	}
 	//#endregion
 
 	//#region https://github.com/microsoft/vscode/issues/115616 @alexr00
@@ -2886,11 +2854,11 @@ declare module 'vscode' {
 
 	export interface PortAttributesProvider {
 		/**
-		 * Provides attributes for the given port. For ports that your extension doesn't know about, simply
-		 * return undefined. For example, if `providePortAttributes` is called with ports 3000 but your
-		 * extension doesn't know anything about 3000 you should return undefined.
+		 * Provides attributes for the given ports. For ports that your extension doesn't know about, simply don't include
+		 * them in the returned array. For example, if `providePortAttributes` is called with ports [3000, 4000] but your
+		 * extension doesn't know anything about those ports you can return an empty array.
 		 */
-		providePortAttributes(port: number, pid: number | undefined, commandLine: string | undefined, token: CancellationToken): ProviderResult<PortAttributes>;
+		providePortAttributes(ports: number[], pid: number | undefined, commandLine: string | undefined, token: CancellationToken): ProviderResult<PortAttributes[]>;
 	}
 
 	export namespace workspace {
@@ -2901,24 +2869,11 @@ declare module 'vscode' {
 		 * ignored, since they don't need to be user facing.
 		 *
 		 * @param portSelector If registerPortAttributesProvider is called after you start your process then you may already
-		 * know the range of ports or the pid of your process. All properties of a the portSelector must be true for your
-		 * provider to get called.
+		 * know the range of ports or the pid of your process.
 		 * The `portRange` is start inclusive and end exclusive.
 		 * @param provider The PortAttributesProvider
 		 */
-		export function registerPortAttributesProvider(portSelector: { pid?: number, portRange?: [number, number], commandMatcher?: RegExp }, provider: PortAttributesProvider): Disposable;
+		export function registerPortAttributesProvider(portSelector: { pid?: number, portRange?: [number, number] }, provider: PortAttributesProvider): Disposable;
 	}
-	//#endregion
-
-	// region https://github.com/microsoft/vscode/issues/119904 @eamodio
-
-	export interface SourceControlInputBox {
-
-		/**
-		 * Sets focus to the input.
-		 */
-		focus(): void;
-	}
-
 	//#endregion
 }
