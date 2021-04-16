@@ -13,6 +13,7 @@ import { withNullAsUndefined } from 'vs/base/common/types';
 import { IDisposableDataProvider } from 'sql/base/common/dataProvider';
 import { IContextViewProvider } from 'vs/base/browser/ui/contextview/contextview';
 import { IInputBoxStyles, InputBox } from 'sql/base/browser/ui/inputBox/inputBox';
+import { trapKeyboardNavigation } from 'sql/base/browser/dom';
 
 export type HeaderFilterCommands = 'sort-asc' | 'sort-desc';
 
@@ -59,7 +60,7 @@ export class HeaderFilter<T extends Slick.SlickData> {
 			.subscribe(this.grid.onKeyDown, (e: DOMEvent) => this.handleKeyDown(e as KeyboardEvent));
 		this.grid.setColumns(this.grid.getColumns());
 
-		this.disposableStore.add(addDisposableListener(document.body, 'mousedown', e => this.handleBodyMouseDown(e)));
+		this.disposableStore.add(addDisposableListener(document.body, 'mousedown', e => this.handleBodyMouseDown(e), true));
 		this.disposableStore.add(addDisposableListener(document.body, 'keydown', e => this.handleKeyDown(e)));
 	}
 
@@ -79,8 +80,6 @@ export class HeaderFilter<T extends Slick.SlickData> {
 	private handleBodyMouseDown(e: MouseEvent): void {
 		if (this.$menu && this.$menu[0] !== e.target && !jQuery.contains(this.$menu[0], e.target as Element)) {
 			this.hideMenu();
-			e.preventDefault();
-			e.stopPropagation();
 		}
 	}
 
@@ -307,6 +306,9 @@ export class HeaderFilter<T extends Slick.SlickData> {
 		jQuery(':checkbox', $filter).bind('click', (e) => {
 			this.workingFilters = this.changeWorkingFilter(filterItems, this.workingFilters, jQuery(e.target));
 		});
+
+		// No need to add this to disposable store, it will be disposed when the menu is closed.
+		trapKeyboardNavigation(this.$menu[0]);
 	}
 
 	public style(styles: ITableFilterStyle): void {
