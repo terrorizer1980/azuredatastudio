@@ -14,13 +14,12 @@ export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 	constructor(
 		private readonly _providerId: string,
 		private readonly _provider: vscode.NotebookContentProvider,
-		private readonly _options: vscode.NotebookDocumentContentOptions | undefined) {
+		_options: vscode.NotebookDocumentContentOptions | undefined) {
 	}
 
 	public async getNotebookContents(notebookUri: vscode.Uri): Promise<azdata.nb.INotebookContents> {
 		let openContext: vscode.NotebookDocumentOpenContext = {};
-		let cancelSource = new vscode.CancellationTokenSource();
-		let notebookData = await this._provider.openNotebook(notebookUri, openContext, cancelSource.token);
+		let notebookData = await this._provider.openNotebook(notebookUri, openContext);
 		return this.convertDataToNotebookContents(notebookData);
 	}
 
@@ -36,42 +35,35 @@ export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 	}
 
 	private convertContentsToNotebookDocument(notebookUri: vscode.Uri, notebook: azdata.nb.INotebookContents): vscode.NotebookDocument {
-		let cells = this.convertCellContentsToCells(notebookUri, notebook.cells);
+		let cells = this.convertCellContentsToCells(notebookUri, notebook.cells, notebook?.metadata?.language_info?.name);
 		return {
 			uri: notebookUri,
 			version: undefined,
 			fileName: path.basename(notebookUri.fsPath),
+			viewType: this._providerId,
 			isDirty: undefined,
 			isUntitled: notebookUri.scheme === Schemas.untitled,
-			isClosed: undefined,
+			cells: cells,
+			contentOptions: undefined,
 			metadata: new vscode.NotebookDocumentMetadata(),
-			viewType: this._providerId,
-			cellCount: cells.length,
-			cellAt(index: number): vscode.NotebookCell {
-				return cells[index];
-			},
-			getCells(): vscode.NotebookCell[] {
-				return cells;
-			},
-			save(): Thenable<boolean> {
-				return Promise.resolve(false);
+			save(): Promise<boolean> {
+				return Promise.resolve(true);
 			}
 		};
 	}
 
-	private convertCellContentsToCells(notebookUri: vscode.Uri, cellContents: azdata.nb.ICellContents[]): vscode.NotebookCell[] {
+	private convertCellContentsToCells(notebookUri: vscode.Uri, cellContents: azdata.nb.ICellContents[], language: string): vscode.NotebookCell[] {
 		let cellCount = 0;
 		return cellContents.map(content => {
 			return {
 				index: cellCount++,
 				notebook: undefined, // Not used
-				kind: content.cell_type === CellTypes.Code ? vscode.NotebookCellKind.Code : vscode.NotebookCellKind.Markdown,
+				uri: notebookUri,
+				cellKind: content.cell_type === CellTypes.Code ? vscode.NotebookCellKind.Code : vscode.NotebookCellKind.Markdown,
 				document: this.convertSourceTextToDocument(content.source),
-				metadata: new vscode.NotebookCellMetadata(),
+				language: language,
 				outputs: this.convertCellOutputs(content.outputs),
-				latestExecutionSummary: {
-					executionOrder: content.execution_count
-				}
+				metadata: new vscode.NotebookCellMetadata()
 			};
 		});
 	}
@@ -86,25 +78,4 @@ export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 	private convertSourceTextToDocument(source: string | string[]): vscode.TextDocument {
 		return undefined;
 	}
-
-	/*
-	export interface ICellContents {
-		cell_type: CellType;
-		source: string | string[];
-		metadata?: ICellMetadata;
-		execution_count?: number;
-		outputs?: ICellOutput[];
-	}
-
-	export interface NotebookCell {
-		readonly index: number;
-		readonly notebook: NotebookDocument;
-		readonly uri: Uri;
-		readonly cellKind: CellKind;
-		readonly document: TextDocument;
-		readonly language: string;
-		outputs: CellOutput[];
-		metadata: NotebookCellMetadata;
-	}
-	*/
 }

@@ -15,7 +15,7 @@ import { EditorOption } from 'vs/editor/common/config/editorOptions';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { BulkTextEdits } from 'vs/workbench/contrib/bulkEdit/browser/bulkTextEdits';
 import { BulkFileEdits } from 'vs/workbench/contrib/bulkEdit/browser/bulkFileEdits';
-import { BulkCellEdits, ResourceNotebookCellEdit } from 'vs/workbench/contrib/bulkEdit/browser/bulkCellEdits';
+// import { BulkCellEdits, ResourceNotebookCellEdit } from 'vs/workbench/contrib/bulkEdit/browser/bulkCellEdits';
 import { UndoRedoGroup, UndoRedoSource } from 'vs/platform/undoRedo/common/undoRedo';
 import { LinkedList } from 'vs/base/common/linkedList';
 import { CancellationToken } from 'vs/base/common/cancellation';
@@ -79,9 +79,12 @@ class BulkEdit {
 				await this._performFileEdits(<ResourceFileEdit[]>group, this._undoRedoGroup, this._undoRedoSource, progress);
 			} else if (group[0] instanceof ResourceTextEdit) {
 				await this._performTextEdits(<ResourceTextEdit[]>group, this._undoRedoGroup, this._undoRedoSource, progress);
-			} else if (group[0] instanceof ResourceNotebookCellEdit) {
-				await this._performCellEdits(<ResourceNotebookCellEdit[]>group, this._undoRedoGroup, this._undoRedoSource, progress);
-			} else {
+			}
+			// {{SQL CARBON EDIT}}
+			// else if (group[0] instanceof ResourceNotebookCellEdit) {
+			// 	await this._performCellEdits(<ResourceNotebookCellEdit[]>group, this._undoRedoGroup, this._undoRedoSource, progress);
+			// }
+			else {
 				console.log('UNKNOWN EDIT');
 			}
 			index = index + range;
@@ -100,11 +103,12 @@ class BulkEdit {
 		await model.apply();
 	}
 
-	private async _performCellEdits(edits: ResourceNotebookCellEdit[], undoRedoGroup: UndoRedoGroup, undoRedoSource: UndoRedoSource | undefined, progress: IProgress<void>): Promise<void> {
-		this._logService.debug('_performCellEdits', JSON.stringify(edits));
-		const model = this._instaService.createInstance(BulkCellEdits, undoRedoGroup, undoRedoSource, progress, this._token, edits);
-		await model.apply();
-	}
+	// {{SQL CARBON EDIT}}
+	// private async _performCellEdits(edits: ResourceNotebookCellEdit[], undoRedoGroup: UndoRedoGroup, undoRedoSource: UndoRedoSource | undefined, progress: IProgress<void>): Promise<void> {
+	// 	this._logService.debug('_performCellEdits', JSON.stringify(edits));
+	// 	const model = this._instaService.createInstance(BulkCellEdits, undoRedoGroup, undoRedoSource, progress, this._token, edits);
+	// 	await model.apply();
+	// }
 }
 
 export class BulkEditService implements IBulkEditService {

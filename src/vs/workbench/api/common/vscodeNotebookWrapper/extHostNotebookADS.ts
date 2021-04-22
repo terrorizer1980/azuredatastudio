@@ -7,17 +7,15 @@ import { CancellationToken } from 'vs/base/common/cancellation';
 import { Emitter, Event } from 'vs/base/common/event';
 import { URI, UriComponents } from 'vs/base/common/uri';
 import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
-import { ExtHostNotebookShape, IMainContext, INotebookDocumentPropertiesChangeData, INotebookDocumentsAndEditorsDelta, INotebookEditorPropertiesChangeData } from 'vs/workbench/api/common/extHost.protocol';
+import { ExtHostNotebookShape, IMainContext, INotebookDocumentPropertiesChangeData, INotebookDocumentsAndEditorsDelta, INotebookEditorPropertiesChangeData, INotebookKernelInfoDto2 } from 'vs/workbench/api/common/extHost.protocol';
 import { ILogService } from 'vs/platform/log/common/log';
 import { ExtHostCommands } from 'vs/workbench/api/common/extHostCommands';
 import { ExtHostDocumentsAndEditors } from 'vs/workbench/api/common/extHostDocumentsAndEditors';
 import { IExtensionStoragePaths } from 'vs/workbench/api/common/extHostStoragePaths';
 import * as extHostTypes from 'vs/workbench/api/common/extHostTypes';
 import { WebviewInitData } from 'vs/workbench/api/common/shared/webview';
-import { INotebookDisplayOrder, INotebookKernelInfoDto2, NotebookCellsChangedEventDto, NotebookDataDto } from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { NotebookCellsChangedEventDto, NotebookDataDto } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import * as vscode from 'vscode';
-import { ExtHostNotebookDocument } from '../extHostNotebookDocument';
-import { ExtHostNotebookEditor } from '../extHostNotebookEditor';
 import { MainThreadNotebookShape, SqlMainContext } from 'sql/workbench/api/common/sqlExtHost.protocol';
 import { VSCodeWrapperNotebookProvider } from './vscodeWrapperNotebookProvider';
 
@@ -91,6 +89,8 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 
 		// TODO: call proxy's registerNotebookKernelProvider method here
 		this._proxy.$registerNotebookProvider(undefined, -1);
+
+		return undefined;
 	}
 
 	public registerNotebookKernelProvider(extension: IExtensionDescription, selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): vscode.Disposable {
@@ -115,9 +115,11 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 
 		// TODO: call proxy's registerNotebookKernelProvider method here
 		this._proxy.$registerNotebookProvider(undefined, -1);
+
+		return undefined;
 	}
 
-	public get notebookDocuments(): ExtHostNotebookDocument[] {
+	public get notebookDocuments(): vscode.NotebookDocument[] {
 		return [];
 	}
 
@@ -132,7 +134,7 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 	//#endregion
 
 	//#region vscode.window APIs
-	public get visibleNotebookEditors(): ExtHostNotebookEditor[] {
+	public get visibleNotebookEditors(): vscode.NotebookEditor[] {
 		return [];
 	}
 
@@ -159,59 +161,47 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 
 	//#region ExtHostNotebookShape
 
-	public async $provideNotebookKernels(handle: number, uri: UriComponents, token: CancellationToken): Promise<INotebookKernelInfoDto2[]> {
+	public $resolveNotebookEditor(viewType: string, uri: UriComponents, editorId: string): Promise<void> {
 		throw new Error('Method not implemented.');
 	}
 
-	public async $resolveNotebookKernel(handle: number, editorId: string, uri: UriComponents, kernelId: string, token: CancellationToken): Promise<void> {
+	public $acceptNotebookActiveKernelChange(event: { uri: UriComponents, providerHandle: number | undefined, kernelFriendlyId: string | undefined }): void {
 		throw new Error('Method not implemented.');
 	}
 
-	public async $resolveNotebookData(viewType: string, uri: UriComponents, backupId?: string): Promise<NotebookDataDto> {
+	public $provideNotebookKernels(handle: number, uri: UriComponents, token: CancellationToken): Promise<INotebookKernelInfoDto2[]> {
 		throw new Error('Method not implemented.');
 	}
 
-	public async $resolveNotebookEditor(viewType: string, uri: UriComponents, editorId: string): Promise<void> {
+	public $resolveNotebookKernel(handle: number, editorId: string, uri: UriComponents, kernelId: string, token: CancellationToken): Promise<void> {
 		throw new Error('Method not implemented.');
 	}
 
-	public async $executeNotebookKernelFromProvider(handle: number, uri: UriComponents, kernelId: string, cellHandle: number | undefined): Promise<void> {
+	public $executeNotebookKernelFromProvider(handle: number, uri: UriComponents, kernelId: string, cellHandle: number | undefined): Promise<void> {
 		throw new Error('Method not implemented.');
 	}
 
-	public async $cancelNotebookKernelFromProvider(handle: number, uri: UriComponents, kernelId: string, cellHandle: number | undefined): Promise<void> {
+	public $cancelNotebookKernelFromProvider(handle: number, uri: UriComponents, kernelId: string, cellHandle: number | undefined): Promise<void> {
 		throw new Error('Method not implemented.');
 	}
 
-	public async $saveNotebook(viewType: string, uri: UriComponents, token: CancellationToken): Promise<boolean> {
+	public $onDidReceiveMessage(editorId: string, rendererId: string | undefined, message: unknown): void {
 		throw new Error('Method not implemented.');
 	}
 
-	public async $saveNotebookAs(viewType: string, uri: UriComponents, target: UriComponents, token: CancellationToken): Promise<boolean> {
+	public $openNotebook(viewType: string, uri: UriComponents, backupId?: string): Promise<NotebookDataDto> {
 		throw new Error('Method not implemented.');
 	}
 
-	public async $undoNotebook(viewType: string, uri: UriComponents, editId: number, isDirty: boolean): Promise<void> {
+	public $saveNotebook(viewType: string, uri: UriComponents, token: CancellationToken): Promise<boolean> {
 		throw new Error('Method not implemented.');
 	}
 
-	public async $redoNotebook(viewType: string, uri: UriComponents, editId: number, isDirty: boolean): Promise<void> {
+	public $saveNotebookAs(viewType: string, uri: UriComponents, target: UriComponents, token: CancellationToken): Promise<boolean> {
 		throw new Error('Method not implemented.');
 	}
 
-	public async $backup(viewType: string, uri: UriComponents, cancellation: CancellationToken): Promise<string | undefined> {
-		throw new Error('Method not implemented.');
-	}
-
-	public $acceptDisplayOrder(displayOrder: INotebookDisplayOrder): void {
-		throw new Error('Method not implemented.');
-	}
-
-	public $acceptNotebookActiveKernelChange(event: { uri: UriComponents, providerHandle: number | undefined, kernelId: string | undefined; }): void {
-		throw new Error('Method not implemented.');
-	}
-
-	public $onDidReceiveMessage(editorId: string, forRendererType: string | undefined, message: any): void {
+	public $backupNotebook(viewType: string, uri: UriComponents, cancellation: CancellationToken): Promise<string> {
 		throw new Error('Method not implemented.');
 	}
 
@@ -219,11 +209,11 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 		throw new Error('Method not implemented.');
 	}
 
-	public $acceptModelSaved(uriComponents: UriComponents): void {
+	public $acceptDirtyStateChanged(uriComponents: UriComponents, isDirty: boolean): void {
 		throw new Error('Method not implemented.');
 	}
 
-	public $acceptEditorPropertiesChanged(id: string, data: INotebookEditorPropertiesChangeData): void {
+	public $acceptModelSaved(uriComponents: UriComponents): void {
 		throw new Error('Method not implemented.');
 	}
 
@@ -235,11 +225,15 @@ export class ExtHostNotebookController implements ExtHostNotebookShape {
 		throw new Error('Method not implemented.');
 	}
 
+	public $acceptEditorPropertiesChanged(id: string, data: INotebookEditorPropertiesChangeData): void {
+		throw new Error('Method not implemented.');
+	}
+
 	//#endregion
 
 	//#region Extra internal methods
 
-	public lookupNotebookDocument(uri: URI): ExtHostNotebookDocument | undefined {
+	public lookupNotebookDocument(uri: URI): vscode.NotebookDocument | undefined {
 		return undefined;
 	}
 

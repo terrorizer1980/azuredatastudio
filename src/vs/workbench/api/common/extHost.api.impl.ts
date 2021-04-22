@@ -1028,7 +1028,7 @@ export function createApiFactoryAndRegisterActors(accessor: ServicesAccessor): I
 			},
 			get notebookDocuments(): vscode.NotebookDocument[] {
 				checkProposedApiEnabled(extension);
-				return extHostNotebook.notebookDocuments.map(d => d.notebookDocument);
+				return extHostNotebook.notebookDocuments; // {{SQL CARBON EDIT}}
 			},
 			get visibleNotebookEditors(): vscode.NotebookEditor[] {
 				checkProposedApiEnabled(extension);
@@ -1243,36 +1243,41 @@ export function createApiFactoryAndRegisterActors(accessor: ServicesAccessor): I
 				checkProposedApiEnabled(extension);
 				return extHostTypes.TimelineItem;
 			},
-			get CellKind() {
-				checkProposedApiEnabled(extension);
-				return extHostTypes.CellKind;
+			get NotebookCellRange() {
+				return extHostTypes.NotebookCellRange;
 			},
-			get CellOutputKind() {
-				checkProposedApiEnabled(extension);
-				return extHostTypes.CellOutputKind;
+			get NotebookCellKind() {
+				// checkProposedApiEnabled(extension);
+				return extHostTypes.NotebookCellKind;
 			},
 			get NotebookCellRunState() {
-				checkProposedApiEnabled(extension);
+				// checkProposedApiEnabled(extension);
 				return extHostTypes.NotebookCellRunState;
 			},
+			get NotebookDocumentMetadata() {
+				return extHostTypes.NotebookDocumentMetadata;
+			},
+			get NotebookCellMetadata() {
+				return extHostTypes.NotebookCellMetadata;
+			},
 			get NotebookRunState() {
-				checkProposedApiEnabled(extension);
+				// checkProposedApiEnabled(extension);
 				return extHostTypes.NotebookRunState;
 			},
 			get NotebookCellStatusBarAlignment() {
-				checkProposedApiEnabled(extension);
+				// checkProposedApiEnabled(extension);
 				return extHostTypes.NotebookCellStatusBarAlignment;
 			},
 			get NotebookEditorRevealType() {
-				checkProposedApiEnabled(extension);
+				// checkProposedApiEnabled(extension);
 				return extHostTypes.NotebookEditorRevealType;
 			},
 			get NotebookCellOutput() {
-				checkProposedApiEnabled(extension);
+				// checkProposedApiEnabled(extension);
 				return extHostTypes.NotebookCellOutput;
 			},
 			get NotebookCellOutputItem() {
-				checkProposedApiEnabled(extension);
+				// checkProposedApiEnabled(extension);
 				return extHostTypes.NotebookCellOutputItem;
 			},
 			get LinkedEditingRanges() {

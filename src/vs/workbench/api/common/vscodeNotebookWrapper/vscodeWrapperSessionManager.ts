@@ -9,9 +9,9 @@ import * as vscode from 'vscode';
 export class VSCodeWrapperSessionManager implements azdata.nb.SessionManager {
 
 	constructor(
-		private readonly _providerId: string,
-		private readonly _selector: vscode.NotebookDocumentFilter,
-		private readonly _provider: vscode.NotebookKernelProvider) {
+		_providerId: string,
+		_selector: vscode.NotebookDocumentFilter,
+		_provider: vscode.NotebookKernelProvider) {
 
 	}
 
