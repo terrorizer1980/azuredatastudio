@@ -14,7 +14,7 @@ export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 	constructor(
 		private readonly _providerId: string,
 		private readonly _provider: vscode.NotebookContentProvider,
-		_options: vscode.NotebookDocumentContentOptions | undefined) {
+		private readonly _options: vscode.NotebookDocumentContentOptions | undefined) {
 	}
 
 	public async getNotebookContents(notebookUri: vscode.Uri): Promise<azdata.nb.INotebookContents> {
@@ -44,7 +44,7 @@ export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 			isDirty: undefined,
 			isUntitled: notebookUri.scheme === Schemas.untitled,
 			cells: cells,
-			contentOptions: undefined,
+			contentOptions: this._options,
 			metadata: new vscode.NotebookDocumentMetadata(),
 			save(): Promise<boolean> {
 				return Promise.resolve(true);
@@ -72,7 +72,52 @@ export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 		if (!outputs) {
 			return [];
 		}
-		return [];
+		return outputs.map<vscode.NotebookCellOutput>(output => {
+			let convertedMetadata: Record<string, any> = undefined;
+			if (output.metadata?.azdata_chartOptions) {
+				convertedMetadata = {};
+				convertedMetadata['azdata_chartOptions'] = output.metadata?.azdata_chartOptions;
+			}
+			switch (output.output_type) {
+				case 'execute_result':
+					// let executeResult = output as azdata.nb.IExecuteResult;
+					return new vscode.NotebookCellOutput(
+						[],
+						undefined, // Not used
+						convertedMetadata
+					);
+				case 'display_data':
+					// let displayData = output as azdata.nb.IDisplayData;
+					return new vscode.NotebookCellOutput(
+						[],
+						undefined, // Not used
+						convertedMetadata
+					);
+				case 'stream':
+					// let streamResult = output as azdata.nb.IStreamResult;
+					return new vscode.NotebookCellOutput(
+						[],
+						undefined, // Not used
+						convertedMetadata
+					);
+				case 'error':
+					// let errorResult = output as azdata.nb.IErrorResult;
+					return new vscode.NotebookCellOutput(
+						[new vscode.NotebookCellOutputItem(undefined, undefined, undefined)],
+						undefined, // Not used
+						convertedMetadata
+					);
+				case 'update_display_data':
+					// let updateDisplayData = output as azdata.nb.IUpdateDisplayData;
+					return new vscode.NotebookCellOutput(
+						[],
+						undefined, // Not used
+						convertedMetadata
+					);
+				default:
+					throw new Error(`Unsupported output type: ${output.output_type}`);
+			}
+		});
 	}
 
 	private convertSourceTextToDocument(source: string | string[]): vscode.TextDocument {
