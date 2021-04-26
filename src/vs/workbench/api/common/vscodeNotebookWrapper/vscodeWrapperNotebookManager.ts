@@ -44,17 +44,17 @@ export class VSCodeWrapperNotebookManager implements azdata.nb.NotebookManager {
 		this._contentManager = new VSCodeWrapperContentManager(this._providerId, provider, options);
 	}
 
-	public setNotebookKernelProvider(selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): void {
-		if (this._sessionManager) {
-			throw new Error('Notebook kernel provider already defined.');
-		}
+	// public setNotebookKernelProvider(selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): void {
+	// 	if (this._sessionManager) {
+	// 		throw new Error('Notebook kernel provider already defined.');
+	// 	}
 
-		let viewTypeIsArray = Array.isArray(selector.viewType);
-		if (viewTypeIsArray && !selector.viewType?.includes(this._providerId)
-			|| !viewTypeIsArray && selector.viewType !== this._providerId) {
-			throw new Error('Kernel provider does not match the view type for this notebook manager.');
-		}
+	// 	let viewTypeIsArray = Array.isArray(selector.viewType);
+	// 	if (viewTypeIsArray && !selector.viewType?.includes(this._providerId)
+	// 		|| !viewTypeIsArray && selector.viewType !== this._providerId) {
+	// 		throw new Error('Kernel provider does not match the view type for this notebook manager.');
+	// 	}
 
-		this._sessionManager = new VSCodeWrapperSessionManager(this._providerId, selector, provider);
-	}
+	// 	this._sessionManager = new VSCodeWrapperSessionManager(this._providerId, selector, provider);
+	// }
 }

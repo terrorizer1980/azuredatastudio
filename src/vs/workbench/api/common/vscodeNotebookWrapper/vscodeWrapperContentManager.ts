@@ -6,7 +6,7 @@
 import * as azdata from 'azdata';
 import * as vscode from 'vscode';
 import { Schemas } from 'vs/base/common/network';
-import * as path from 'vs/base/common/path';
+// import * as path from 'vs/base/common/path';
 import { CellTypes } from 'sql/workbench/services/notebook/common/contracts';
 
 export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
@@ -14,12 +14,13 @@ export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 	constructor(
 		private readonly _providerId: string,
 		private readonly _provider: vscode.NotebookContentProvider,
-		private readonly _options: vscode.NotebookDocumentContentOptions | undefined) {
+		_options: vscode.NotebookDocumentContentOptions | undefined) {
 	}
 
 	public async getNotebookContents(notebookUri: vscode.Uri): Promise<azdata.nb.INotebookContents> {
 		let openContext: vscode.NotebookDocumentOpenContext = {};
-		let notebookData = await this._provider.openNotebook(notebookUri, openContext);
+		let cancellation = new vscode.CancellationTokenSource();
+		let notebookData = await this._provider.openNotebook(notebookUri, openContext, cancellation.token);
 		return this.convertDataToNotebookContents(notebookData);
 	}
 
@@ -38,14 +39,23 @@ export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 		let cells = this.convertCellContentsToCells(notebookUri, notebook.cells, notebook?.metadata?.language_info?.name);
 		return {
 			uri: notebookUri,
-			version: undefined,
-			fileName: path.basename(notebookUri.fsPath),
 			viewType: this._providerId,
+			version: undefined,
 			isDirty: undefined,
 			isUntitled: notebookUri.scheme === Schemas.untitled,
-			cells: cells,
-			contentOptions: this._options,
+			isClosed: undefined,
 			metadata: new vscode.NotebookDocumentMetadata(),
+			cellCount: cells.length,
+			cellAt(index: number): vscode.NotebookCell {
+				return cells[index];
+			},
+			getCells(range?: vscode.NotebookRange): vscode.NotebookCell[] {
+				if (range) {
+					return cells.slice(range.start, range.end);
+				} else {
+					return cells;
+				}
+			},
 			save(): Promise<boolean> {
 				return Promise.resolve(true);
 			}
@@ -58,12 +68,11 @@ export class VSCodeWrapperContentManager implements azdata.nb.ContentManager {
 			return {
 				index: cellCount++,
 				notebook: undefined, // Not used
-				uri: notebookUri,
-				cellKind: content.cell_type === CellTypes.Code ? vscode.NotebookCellKind.Code : vscode.NotebookCellKind.Markdown,
+				kind: content.cell_type === CellTypes.Code ? vscode.NotebookCellKind.Code : vscode.NotebookCellKind.Markdown,
 				document: this.convertSourceTextToDocument(content.source),
-				language: language,
+				metadata: new vscode.NotebookCellMetadata(),
 				outputs: this.convertCellOutputs(content.outputs),
-				metadata: new vscode.NotebookCellMetadata()
+				latestExecutionSummary: undefined
 			};
 		});
 	}

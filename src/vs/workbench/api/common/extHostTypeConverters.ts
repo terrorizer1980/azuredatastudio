@@ -30,9 +30,10 @@ import { LogLevel as _MainLogLevel } from 'vs/platform/log/common/log';
 import { coalesce, isNonEmptyArray } from 'vs/base/common/arrays';
 import { RenderLineNumbersType } from 'vs/editor/common/config/editorOptions';
 import { CommandsConverter } from 'vs/workbench/api/common/extHostCommands';
-import { ExtHostNotebookController } from 'vs/workbench/api/common/vscodeNotebookWrapper/extHostNotebookADS'; // {{SQL CARBON EDIT}}
 import { ITestItem, ITestState } from 'vs/workbench/contrib/testing/common/testCollection';
 import * as notebooks from 'vs/workbench/contrib/notebook/common/notebookCommon';
+import { DisposableStore } from 'vs/base/common/lifecycle';
+import { ExtHostNotebookController } from 'vs/workbench/api/common/vscodeNotebookWrapper/extHostNotebookADS';
 
 export interface PositionLike {
 	line: number;
@@ -568,7 +569,7 @@ export namespace WorkspaceEdit {
 							metadata: entry.metadata,
 							resource: entry.uri,
 							edit: {
-								editType: notebooks.CellEditType.Metadata,
+								editType: notebooks.CellEditType.PartialMetadata,
 								index: entry.index,
 								metadata: entry.newMetadata
 							}
@@ -594,7 +595,6 @@ export namespace WorkspaceEdit {
 						resource: entry.uri,
 						edit: {
 							editType: notebooks.CellEditType.OutputItems,
-							index: entry.index,
 							outputId: entry.outputId,
 							items: entry.newOutputItems?.map(NotebookCellOutputItem.from) || [],
 							append: entry.append
@@ -1308,21 +1308,31 @@ export namespace LanguageSelector {
 	}
 }
 
-export namespace NotebookCellRange {
+export namespace NotebookRange {
 
-	export function from(range: vscode.NotebookCellRange): notebooks.ICellRange {
+	export function from(range: vscode.NotebookRange): notebooks.ICellRange {
 		return { start: range.start, end: range.end };
 	}
 
-	export function to(range: notebooks.ICellRange): types.NotebookCellRange {
-		return new types.NotebookCellRange(range.start, range.end);
+	export function to(range: notebooks.ICellRange): types.NotebookRange {
+		return new types.NotebookRange(range.start, range.end);
 	}
 }
 
 export namespace NotebookCellMetadata {
 
 	export function to(data: notebooks.NotebookCellMetadata): types.NotebookCellMetadata {
-		return new types.NotebookCellMetadata(data.editable, data.breakpointMargin, data.runnable, data.hasExecutionOrder, data.executionOrder, data.runState, data.runStartTime, data.statusMessage, data.lastRunDuration, data.inputCollapsed, data.outputCollapsed, data.custom);
+		return new types.NotebookCellMetadata().with({
+			...data,
+			...{
+				executionOrder: null,
+				lastRunSuccess: null,
+				runState: null,
+				runStartTime: null,
+				runStartTimeAdjustment: null,
+				runEndTime: null
+			}
+		});
 	}
 }
 
@@ -1333,9 +1343,28 @@ export namespace NotebookDocumentMetadata {
 	}
 
 	export function to(data: notebooks.NotebookDocumentMetadata): types.NotebookDocumentMetadata {
-		return new types.NotebookDocumentMetadata(data.editable, data.runnable, data.cellEditable, data.cellRunnable, data.cellHasExecutionOrder, data.displayOrder, data.custom, data.runState, data.trusted);
+		return new types.NotebookDocumentMetadata().with(data);
+	}
+}
+
+export namespace NotebookCellPreviousExecutionResult {
+	export function to(data: notebooks.NotebookCellMetadata): vscode.NotebookCellExecutionSummary {
+		return {
+			startTime: data.runStartTime,
+			endTime: data.runEndTime,
+			executionOrder: data.executionOrder,
+			success: data.lastRunSuccess
+		};
 	}
 
+	export function from(data: vscode.NotebookCellExecutionSummary): Partial<notebooks.NotebookCellMetadata> {
+		return {
+			lastRunSuccess: data.success,
+			runStartTime: data.startTime,
+			runEndTime: data.endTime,
+			executionOrder: data.executionOrder
+		};
+	}
 }
 
 export namespace NotebookCellKind {
@@ -1364,20 +1393,25 @@ export namespace NotebookCellData {
 
 	export function from(data: vscode.NotebookCellData): notebooks.ICellDto2 {
 		return {
-			cellKind: NotebookCellKind.from(data.cellKind),
+			cellKind: NotebookCellKind.from(data.kind),
 			language: data.language,
 			source: data.source,
-			metadata: data.metadata,
-			outputs: data.outputs.map(output => ({
-				outputId: output.id,
-				metadata: output.metadata,
-				outputs: (output.outputs || []).map(op => ({
-					mime: op.mime,
-					value: op.value,
-					metadata: op.metadata
-				}))
-			}))
+			metadata: {
+				...data.metadata,
+				...NotebookCellPreviousExecutionResult.from(data.latestExecutionSummary ?? {})
+			},
+			outputs: data.outputs ? data.outputs.map(NotebookCellOutput.from) : []
 		};
+	}
+
+	export function to(data: notebooks.ICellDto2): vscode.NotebookCellData {
+		return new types.NotebookCellData(
+			NotebookCellKind.to(data.cellKind),
+			data.source,
+			data.language,
+			data.outputs ? data.outputs.map(NotebookCellOutput.to) : undefined,
+			data.metadata ? NotebookCellMetadata.to(data.metadata) : undefined,
+		);
 	}
 }
 
@@ -1490,6 +1524,55 @@ export namespace NotebookDecorationRenderOptions {
 			backgroundColor: <string | types.ThemeColor>options.backgroundColor,
 			borderColor: <string | types.ThemeColor>options.borderColor,
 			top: options.top ? ThemableDecorationAttachmentRenderOptions.from(options.top) : undefined
+		};
+	}
+}
+
+export namespace NotebookStatusBarItem {
+	export function from(item: vscode.NotebookCellStatusBarItem, commandsConverter: CommandsConverter, disposables: DisposableStore): notebooks.INotebookCellStatusBarItem {
+		const command = typeof item.command === 'string' ? { title: '', command: item.command } : item.command;
+		return {
+			alignment: item.alignment === types.NotebookCellStatusBarAlignment.Left ? notebooks.CellStatusbarAlignment.Left : notebooks.CellStatusbarAlignment.Right,
+			command: commandsConverter.toInternal(command, disposables), // TODO@roblou
+			text: item.text,
+			tooltip: item.tooltip,
+			accessibilityInformation: item.accessibilityInformation,
+			priority: item.priority
+		};
+	}
+}
+
+export namespace NotebookDocumentContentOptions {
+	export function from(options: vscode.NotebookDocumentContentOptions | undefined): notebooks.TransientOptions {
+		return {
+			transientOutputs: options?.transientOutputs ?? false,
+			transientCellMetadata: {
+				...options?.transientCellMetadata,
+				executionOrder: true,
+				runState: true,
+				runStartTime: true,
+				runStartTimeAdjustment: true,
+				runEndTime: true,
+				lastRunSuccess: true
+			},
+			transientDocumentMetadata: options?.transientDocumentMetadata ?? {}
+		};
+	}
+}
+
+export namespace NotebookKernelPreload {
+	export function from(preload: vscode.NotebookKernelPreload): { uri: UriComponents; provides: string[] } {
+		return {
+			uri: preload.uri,
+			provides: typeof preload.provides === 'string'
+				? [preload.provides]
+				: preload.provides ?? []
+		};
+	}
+	export function to(preload: { uri: UriComponents; provides: string[] }): vscode.NotebookKernelPreload {
+		return {
+			uri: URI.revive(preload.uri),
+			provides: preload.provides
 		};
 	}
 }

@@ -23,9 +23,9 @@ export class VSCodeWrapperNotebookProvider implements azdata.nb.NotebookProvider
 		this._notebookManager.setNotebookContentProvider(notebookType, provider, options);
 	}
 
-	public setNotebookKernelProvider(selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): void {
-		this._notebookManager.setNotebookKernelProvider(selector, provider);
-	}
+	// public setNotebookKernelProvider(selector: vscode.NotebookDocumentFilter, provider: vscode.NotebookKernelProvider): void {
+	// 	this._notebookManager.setNotebookKernelProvider(selector, provider);
+	// }
 
 	public get providerId(): string {
 		return this._providerId;

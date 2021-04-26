@@ -18,8 +18,8 @@ import { ICommandsExecutor, RemoveFromRecentlyOpenedAPICommand, OpenIssueReporte
 import { isFalsyOrEmpty } from 'vs/base/common/arrays';
 import { IRange } from 'vs/editor/common/core/range';
 import { IPosition } from 'vs/editor/common/core/position';
-import { TransientMetadata } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 import { ITextEditorOptions } from 'vs/platform/editor/common/editor';
+import { TransientCellMetadata, TransientDocumentMetadata } from 'vs/workbench/contrib/notebook/common/notebookCommon';
 
 //#region --- NEW world
 
@@ -275,25 +275,29 @@ const newCommands: ApiCommand[] = [
 	new ApiCommand(
 		'vscode.resolveNotebookContentProviders', '_resolveNotebookContentProvider', 'Resolve Notebook Content Providers',
 		[
-			new ApiCommandArgument<string, string>('viewType', '', v => typeof v === 'string', v => v),
-			new ApiCommandArgument<string, string>('displayName', '', v => typeof v === 'string', v => v),
-			new ApiCommandArgument<object, object>('options', '', v => typeof v === 'object', v => v),
+			// new ApiCommandArgument<string, string>('viewType', '', v => typeof v === 'string', v => v),
+			// new ApiCommandArgument<string, string>('displayName', '', v => typeof v === 'string', v => v),
+			// new ApiCommandArgument<object, object>('options', '', v => typeof v === 'object', v => v),
 		],
 		new ApiCommandResult<{
 			viewType: string;
 			displayName: string;
-			options: { transientOutputs: boolean; transientMetadata: TransientMetadata };
+			options: { transientOutputs: boolean; transientCellMetadata: TransientCellMetadata; transientDocumentMetadata: TransientDocumentMetadata; };
 			filenamePattern: (string | types.RelativePattern | { include: string | types.RelativePattern, exclude: string | types.RelativePattern })[]
 		}[], {
 			viewType: string;
 			displayName: string;
-			filenamePattern: vscode.NotebookFilenamePattern[];
+			filenamePattern: (vscode.GlobPattern | { include: vscode.GlobPattern; exclude: vscode.GlobPattern; })[];
 			options: vscode.NotebookDocumentContentOptions;
 		}[] | undefined>('A promise that resolves to an array of NotebookContentProvider static info objects.', tryMapWith(item => {
 			return {
 				viewType: item.viewType,
 				displayName: item.displayName,
-				options: { transientOutputs: item.options.transientOutputs, transientMetadata: item.options.transientMetadata },
+				options: {
+					transientOutputs: item.options.transientOutputs,
+					transientCellMetadata: item.options.transientCellMetadata,
+					transientDocumentMetadata: item.options.transientDocumentMetadata
+				},
 				filenamePattern: item.filenamePattern.map(pattern => typeConverters.NotebookExclusiveDocumentPattern.to(pattern))
 			};
 		}))

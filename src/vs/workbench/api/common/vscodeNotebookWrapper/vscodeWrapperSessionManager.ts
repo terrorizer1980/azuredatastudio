@@ -4,14 +4,14 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as azdata from 'azdata';
-import * as vscode from 'vscode';
+// import * as vscode from 'vscode';
 
 export class VSCodeWrapperSessionManager implements azdata.nb.SessionManager {
 
 	constructor(
-		_providerId: string,
-		_selector: vscode.NotebookDocumentFilter,
-		_provider: vscode.NotebookKernelProvider) {
+		_providerId: string) {
+		// _selector: vscode.NotebookDocumentFilter,
+		// _provider: vscode.NotebookKernelProvider) {
 
 	}
 
