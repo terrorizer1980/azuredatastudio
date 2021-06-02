@@ -226,8 +226,20 @@ steps:
 
   - script: |
       set -e
+      cd /opt
+      apt install wget
+      wget https://www.python.org/ftp/python/3.6.3/Python-3.6.3.tgz
+      tar -xvf Python-3.6.3.tgz
+      cd Python-3.6.3
+      ./configure
+      make
+      make install
+    displayName: Setup Python 3.6
+
+  - script: |
+      set -e
       cd ./extensions/mssql/node_modules/@microsoft/ads-kerberos
-      npx node-gyp rebuild --target=$(node --version)
+      npx node-gyp rebuild --python=python3.6 --target=$(node --version)
     displayName: Recompile native node modules
 
   - script: |
