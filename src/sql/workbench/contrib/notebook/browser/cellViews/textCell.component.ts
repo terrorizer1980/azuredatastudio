@@ -155,6 +155,15 @@ export class TextCellComponent extends CellView implements OnInit, OnChanges {
 		let editorInput = this._instantiationService.createInstance(UntitledTextEditorInput, model);
 		let untitledEditorModel = await editorInput.resolve() as UntitledTextEditorModel;
 		this._richTextEditorModel = untitledEditorModel.textEditorModel;
+
+		if (this.destroyed) {
+			// At this point, we may have been disposed (scenario: restoring markdown cell in preview mode).
+			// Exiting early to avoid warnings on registering already disposed items, which causes some churning
+			// due to re-disposing things.
+			// There's no negative impact as at this point the component isn't visible (it was removed from the DOM)
+			return;
+		}
+		this._register(this._richTextEditorModel);
 		this._register(this._richTextEditorModel.onDidChangeContent(e => {
 			let outputElement = <HTMLElement>this.output.nativeElement;
 			outputElement.innerHTML = this._richTextEditorModel.getValue();
@@ -327,7 +336,10 @@ export class TextCellComponent extends CellView implements OnInit, OnChanges {
 	}
 
 	public handleHtmlChanged(): void {
-		this.updateRichTextModel();
+		if (this._richTextEditorModel) {
+			let outputElement = <HTMLElement>this.output.nativeElement;
+			this._richTextEditorModel.setValue(outputElement.innerHTML);
+		}
 		this.updateCellSource();
 	}
 
