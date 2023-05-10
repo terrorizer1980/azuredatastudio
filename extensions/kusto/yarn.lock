@@ -175,10 +175,10 @@ figures@^2.0.0:
   dependencies:
     escape-string-regexp "^1.0.5"
 
-find-remove@1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/find-remove/-/find-remove-1.2.1.tgz#afd93400d23890e018ea197591e9d850d3d049a2"
-  integrity sha512-zcspBi9mWAyM9YTcVJLkI/x6rbjSDqHijjPa0vTwEmVZnYSmvYMtixDkUnSnuv2xAAkc9fblpkCg91paBIJaLw==
+find-remove@1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/find-remove/-/find-remove-1.2.2.tgz#b479d3b7c2b62ddc3f91f0001b7836f121ac9395"
+  integrity sha512-P94ar9U0b7AifpOu7MR1iA3cMN4J4kqIJkW15Ol8H0Lp3MI+U32ugunpDXCKOpFgFRRCMBracWWuyT0m3sIU+g==
   dependencies:
     fmerge "1.2.0"
     rimraf "2.6.2"
