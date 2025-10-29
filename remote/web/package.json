@@ -26,7 +26,7 @@
 		"sanitize-html": "^2.3.2",
 		"semver-umd": "^5.5.7",
 		"slickgrid": "github:kburtram/SlickGrid#2.3.33",
-		"turndown": "^7.0.0",
+		"turndown": "^7.2.2",
 		"turndown-plugin-gfm": "^1.0.2",
 		"vscode-oniguruma": "1.3.1",
 		"vscode-textmate": "5.2.0",
